@@ -26,35 +26,79 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+
         if self.path == "/api/key":
             d = json.loads(body)
             k = d.get("key", "").strip()
-            if not k.startswith("sk-"):
-                self.json({"error": "Key must start with sk-"}, 400); return
-            # On cloud: save to environment isn't persistent, use a file
+            if len(k) < 20:
+                self.json({"error": "Invalid key"}, 400); return
             with open("api_key.txt", "w") as f: f.write(k)
             self.json({"ok": True})
-        elif self.path == "/api/claude":
+
+        elif self.path == "/api/analyze":
+            # Receive: { "image_b64": "...", "prompt": "..." }
             k = get_key()
             if not k:
                 self.json({"error": "No API key saved."}, 401); return
             try:
-                req = urllib.request.Request(
-                    "https://api.anthropic.com/v1/messages",
-                    data=body,
-                    headers={
-                        "Content-Type": "application/json",
-                        "x-api-key": k,
-                        "anthropic-version": "2023-06-01"
-                    },
-                    method="POST"
-                )
+                d = json.loads(body)
+                b64  = d["image_b64"]
+                prompt = d["prompt"]
+
+                # Build Gemini request
+                gemini_body = json.dumps({
+                    "contents": [{
+                        "parts": [
+                            {"inline_data": {"mime_type": "image/jpeg", "data": b64}},
+                            {"text": prompt}
+                        ]
+                    }],
+                    "generationConfig": {"temperature": 0.1, "maxOutputTokens": 2048}
+                }).encode()
+
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={k}"
+                req = urllib.request.Request(url, data=gemini_body, headers={"Content-Type": "application/json"}, method="POST")
                 with urllib.request.urlopen(req, timeout=60) as r:
                     result = r.read()
+
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.cors(); self.end_headers()
                 self.wfile.write(result)
+
+            except urllib.error.HTTPError as e:
+                err = e.read()
+                self.send_response(e.code)
+                self.send_header("Content-Type", "application/json")
+                self.cors(); self.end_headers()
+                self.wfile.write(err)
+            except Exception as e:
+                self.json({"error": str(e)}, 500)
+
+        elif self.path == "/api/search":
+            # Text-only search: { "prompt": "..." }
+            k = get_key()
+            if not k:
+                self.json({"error": "No API key saved."}, 401); return
+            try:
+                d = json.loads(body)
+                prompt = d["prompt"]
+
+                gemini_body = json.dumps({
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.1, "maxOutputTokens": 400}
+                }).encode()
+
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={k}"
+                req = urllib.request.Request(url, data=gemini_body, headers={"Content-Type": "application/json"}, method="POST")
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    result = r.read()
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.cors(); self.end_headers()
+                self.wfile.write(result)
+
             except urllib.error.HTTPError as e:
                 err = e.read()
                 self.send_response(e.code)
@@ -85,12 +129,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers(); self.wfile.write(b)
 
 def get_key():
-    # Check file first, then environment variable
     if os.path.exists("api_key.txt"):
         return open("api_key.txt").read().strip()
-    return os.environ.get("ANTHROPIC_API_KEY", "")
+    return os.environ.get("GEMINI_API_KEY", "")
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    print(f"Server running on port {PORT}")
+    print(f"MedLocate running on port {PORT}")
     http.server.HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

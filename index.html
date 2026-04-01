@@ -159,7 +159,8 @@ body{display:flex;align-items:center;justify-content:center}
     <button class="aksv" onclick="saveKey()">Continue →</button>
     <div id="ake" style="color:var(--red);font-size:12px;text-align:center;margin-top:8px;min-height:16px"></div>
     <div style="font-size:11px;color:#475569;text-align:center;line-height:1.6;margin-top:14px">
-      Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--green);text-decoration:none">console.anthropic.com</a>
+      Get your <b style="color:#f1f5f9">FREE</b> Gemini key at<br/>
+      <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--green);text-decoration:none">aistudio.google.com/apikey</a>
     </div>
   </div>
 
@@ -257,7 +258,7 @@ function toggleVis() {
 async function saveKey() {
   const k = document.getElementById('aki').value.trim();
   const e = document.getElementById('ake');
-  if (!k.startsWith('sk-')) { e.textContent = 'Must start with sk-ant-…'; return; }
+  if (k.length < 20) { e.textContent = 'Key looks too short — paste the full key'; return; }
   e.textContent = 'Saving & verifying…';
   try {
     const r = await fetch('/api/key', {
@@ -267,9 +268,9 @@ async function saveKey() {
     });
     const d = await r.json();
     if (d.error) { e.textContent = '❌ ' + d.error; return; }
-    // Quick test
-    const t = await claude([{role:'user',content:'Reply with just OK'}], 10);
-    if (t.error) { e.textContent = '❌ Key rejected: ' + (t.error.message||JSON.stringify(t.error)); return; }
+    // Quick test with Gemini
+    const t = await gemini('Say OK');
+    if (t.error) { e.textContent = '❌ Key rejected: ' + (t.error.message || JSON.stringify(t.error)); return; }
     hide('aks'); boot();
   } catch(ex) { e.textContent = '❌ ' + ex.message; }
 }
@@ -319,10 +320,8 @@ async function doSearch() {
   if (!q) return;
   sr = 'loading'; rS();
   try {
-    const d = await claude([{ role: 'user', content:
-      `Inventory: ${JSON.stringify(items.map(i => ({id:i.id,name:i.name,description:i.description})))}\n\nUser searching for: "${q}"\n\nReturn ONLY a JSON array of matching item IDs. Consider brand names, generic names, drug categories, and symptoms treated. No markdown:\n["id1","id2"]\nReturn [] if nothing matches.`
-    }], 400);
-    const txt = d.content?.find(b => b.type === 'text')?.text || '[]';
+    const prompt = `Inventory: ${JSON.stringify(items.map(i => ({id:i.id,name:i.name,description:i.description})))}\n\nUser searching for: "${q}"\n\nReturn ONLY a JSON array of matching item IDs. Consider brand names, generic names, drug categories, and symptoms treated. No markdown:\n["id1","id2"]\nReturn [] if nothing matches.`;
+    const txt = await gemini(prompt);
     const ids = JSON.parse(txt.replace(/```json|```/g,'').trim());
     sr = items.filter(i => ids.includes(i.id));
   } catch(e) { sr = []; }
@@ -394,17 +393,12 @@ async function onFiles(input) {
     try {
       // Compress
       const { b64, dataUrl } = await compress(file);
-      setP('Sending to Claude AI…', 40);
+      setP('Sending to Gemini AI…', 40);
 
       const photoId = `ph_${Date.now()}_${i}`;
       const label   = file.name.replace(/\.[^.]+$/, '');
 
-      // Call Claude via server proxy
-      const data = await claude([{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
-          { type: 'text', text: `You are scanning a pharmacy shelf photo.
+      const prompt = `You are scanning a pharmacy shelf photo.
 
 List every medicine, tablet, syrup, capsule, ointment, drop, supplement or medical product visible.
 Read the EXACT name printed on each label, box, bottle or strip.
@@ -412,14 +406,10 @@ Read the EXACT name printed on each label, box, bottle or strip.
 Return ONLY a JSON array — no markdown, no explanation:
 [{"name":"Crocin 500mg","description":"Paracetamol tablet for fever and pain","location":"top shelf, left side"}]
 
-Return [] only if there is truly no medicine packaging visible at all.` }
-        ]
-      }], 2000);
+Return [] only if there is truly no medicine packaging visible at all.`;
 
-      if (data.error) throw new Error('API error: ' + JSON.stringify(data.error));
-
-      const rawText = data.content?.find(b => b.type === 'text')?.text || '';
-      if (!rawText) throw new Error('Empty response from Claude');
+      const rawText = await geminiVision(b64, prompt);
+      if (!rawText) throw new Error('Empty response from Gemini');
 
       const match = rawText.match(/\[[\s\S]*\]/);
       let found = [];
@@ -447,7 +437,7 @@ Return [] only if there is truly no medicine packaging visible at all.` }
           ${found.map(d=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #f1f5f9;color:var(--green)">💊 <b>${esc(d.name)}</b> <span style="color:var(--t2)">— ${esc(d.location)}</span></div>`).join('')}
         </div>
         <div class="rawbox">
-          <div style="color:#475569;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">📋 Claude raw response</div>
+          <div style="color:#475569;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">📋 Gemini raw response</div>
           <div class="rawtxt">${esc(rawText)}</div>
         </div>
         <button onclick="rU()" style="width:100%;background:#0f172a;color:#f1f5f9;border:none;border-radius:13px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:7px">← Upload Another</button>
@@ -543,14 +533,30 @@ function delPh(id) {
   persist(); stats(); clsMod(); rG(); rU(); rS();
 }
 
-// ── Claude API (via local server proxy — no CORS) ─────────────────────────────
-async function claude(messages, maxTokens = 1500) {
-  const res = await fetch('/api/claude', {
+// ── Gemini API (via server proxy — no CORS, 100% free) ────────────────────────
+
+// Text-only call (for search)
+async function gemini(prompt) {
+  const res = await fetch('/api/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, messages })
+    body: JSON.stringify({ prompt })
   });
-  return await res.json();
+  const d = await res.json();
+  if (d.error) throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// Vision call (for photo analysis)
+async function geminiVision(image_b64, prompt) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image_b64, prompt })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 // ── Image compression ─────────────────────────────────────────────────────────
