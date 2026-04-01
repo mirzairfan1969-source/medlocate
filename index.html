@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#0c1120"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MedLocate"/>
+<title>MedLocate</title>
+<style>
+:root{
+  --bg:#0c1120; --green:#10b981; --gl:#ecfdf5; --gm:#d1fae5; --gd:#065f46;
+  --tx:#0f172a; --t2:#475569; --t3:#94a3b8; --bd:#e2e8f0; --red:#ef4444;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:var(--tx)}
+input,button{font-family:inherit}
+::-webkit-scrollbar{display:none}
+body{display:flex;align-items:center;justify-content:center}
+#app{width:100%;max-width:430px;height:100vh;display:flex;flex-direction:column;background:#f1f5f9;position:relative;overflow:hidden}
+
+/* Header */
+.hdr{background:linear-gradient(160deg,#0c1120,#0f2744);padding:calc(var(--st)+16px) 20px 16px;flex-shrink:0}
+.eye{color:var(--green);font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px}
+.htit{color:#f1f5f9;font-size:22px;font-weight:300;letter-spacing:-.3px}
+.hsub{color:#475569;font-size:12px;margin-top:2px}
+.chips{display:flex;gap:8px;margin-top:12px}
+.chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px 12px;text-align:center}
+.chipv{color:var(--green);font-size:18px;font-weight:700;line-height:1}
+.chipl{color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:1px}
+
+/* Search */
+.sbar{background:linear-gradient(160deg,#0c1120,#0f2744);padding:0 14px 14px;display:flex;gap:8px;flex-shrink:0}
+.sw{flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:10px 13px;display:flex;align-items:center;gap:7px;transition:border-color .2s}
+.sw:focus-within{border-color:rgba(16,185,129,.5)}
+.sw input{flex:1;background:transparent;border:none;outline:none;color:#f1f5f9;font-size:14px}
+.sfnd{background:var(--green);color:#fff;border:none;border-radius:13px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .1s}
+.sfnd:active{transform:scale(.96)}
+
+/* Scroll */
+.scr{flex:1;overflow-y:auto;padding:13px;-webkit-overflow-scrolling:touch}
+
+/* Cards */
+.card{background:#fff;border-radius:15px;padding:11px;margin-bottom:9px;display:flex;align-items:center;gap:11px;border:1px solid var(--bd);cursor:pointer;transition:transform .1s,background .1s}
+.card:active{transform:scale(.98);background:var(--gl)}
+.cth{width:52px;height:52px;border-radius:9px;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.cth img{width:100%;height:100%;object-fit:cover}
+.ci{flex:1;min-width:0}
+.cn{font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.cd{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.cl{font-size:11px;color:var(--green);font-weight:600}
+.slb{color:var(--t3);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:9px}
+
+/* Empty */
+.emp{text-align:center;padding:44px 20px;animation:fup .4s ease}
+.eic{font-size:52px;margin-bottom:12px}
+.eti{font-size:19px;font-weight:600;color:var(--tx);margin-bottom:7px}
+.etx{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:22px}
+.ebt{background:var(--bg);color:var(--green);border:none;border-radius:13px;padding:12px 24px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* Drop zone */
+.dz{background:linear-gradient(135deg,var(--gl),var(--gm));border:2px dashed var(--green);border-radius:18px;padding:32px 20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:background .15s}
+.dz:active{background:var(--gm)}
+
+/* Tips */
+.tips{background:#fff;border-radius:14px;padding:13px 15px;border:1px solid var(--bd);margin-bottom:13px}
+.tip{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);margin-bottom:5px}
+.tip:last-child{margin-bottom:0}
+.tdot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+/* Photo row */
+.prow{background:#fff;border-radius:13px;padding:9px 11px;margin-bottom:7px;display:flex;align-items:center;gap:11px;cursor:pointer;border:1px solid var(--bd);transition:transform .1s}
+.prow:active{transform:scale(.98)}
+.prow img{width:44px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0}
+
+/* Progress */
+.prg{background:#fff;border-radius:18px;padding:34px 22px;text-align:center}
+.pspin{font-size:40px;display:inline-block;animation:spin 1.4s linear infinite;margin-bottom:14px}
+
+/* Gallery grid */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.gc{border-radius:14px;overflow:hidden;aspect-ratio:1;position:relative;cursor:pointer;background:var(--bd);transition:transform .1s}
+.gc:active{transform:scale(.97)}
+.gc img{width:100%;height:100%;object-fit:cover}
+.gol{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:20px 9px 9px}
+
+/* Loader dots */
+.dots{display:flex;justify-content:center;gap:7px;margin-bottom:14px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:bnc .8s ease infinite alternate}
+
+/* Nav */
+#nav{background:#fff;border-top:1px solid var(--bd);display:flex;padding:7px 0 calc(var(--sb)+8px);flex-shrink:0}
+.nb{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;transition:transform .1s}
+.nb:active{transform:scale(.88)}
+.ndot{width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:1px;display:none}
+
+/* Modal */
+.mback{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;z-index:100;backdrop-filter:blur(5px);animation:fi .2s ease}
+.msh{background:#fff;border-radius:22px 22px 0 0;width:100%;max-height:91%;overflow-y:auto;animation:su .28s cubic-bezier(.34,1.56,.64,1);padding-bottom:calc(var(--sb)+20px)}
+.mhnd{width:34px;height:4px;background:var(--bd);border-radius:99px;margin:11px auto 0}
+.mhro{position:relative;height:200px;background:#f1f5f9;overflow:hidden;margin-top:7px}
+.mhro img{width:100%;height:100%;object-fit:cover}
+.movl{position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.4))}
+.mcls{position:absolute;top:11px;right:11px;background:rgba(0,0,0,.38);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px}
+.mbd{padding:15px 18px}
+.mbdg{display:inline-flex;align-items:center;background:var(--gl);color:#059669;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;margin-bottom:9px;text-transform:uppercase;letter-spacing:1px}
+.mnm{font-size:20px;font-weight:700;color:var(--tx);margin-bottom:5px}
+.mds{font-size:12px;color:var(--t2);line-height:1.55;margin-bottom:14px}
+.lc{background:linear-gradient(135deg,var(--gl),var(--gm));border-radius:14px;padding:13px 15px;border:1px solid #a7f3d0;margin-bottom:14px}
+.lcl{color:var(--gd);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.lcv{font-size:15px;color:var(--tx);font-weight:700;margin-bottom:3px}
+.lcp{font-size:11px;color:#6b7280}
+.dlb{width:100%;background:none;border:1px solid #fca5a5;color:var(--red);border-radius:13px;padding:11px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:7px;transition:background .15s}
+.dlb:active{background:#fef2f2}
+.mit{background:#f8fafc;border-radius:11px;padding:9px 13px;margin-bottom:7px;cursor:pointer;border:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;transition:background .1s}
+.mit:active{background:var(--gl)}
+
+/* API key screen */
+#aks{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:28px 24px}
+.akw{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:13px 15px;display:flex;align-items:center;gap:9px;margin-bottom:10px;transition:border-color .2s}
+.akw:focus-within{border-color:rgba(16,185,129,.5)}
+.akw input{flex:1;background:transparent;border:none;outline:none;color:#f1f5f9;font-size:13px;font-family:monospace;letter-spacing:.8px}
+.aksv{width:100%;background:var(--green);color:#fff;border:none;border-radius:13px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
+.aksv:active{background:#059669}
+
+/* Raw response box */
+.rawbox{background:#0c1120;border-radius:11px;padding:11px;margin-bottom:11px}
+.rawtxt{color:var(--green);font-size:10px;font-family:monospace;line-height:1.55;white-space:pre-wrap;word-break:break-all;max-height:150px;overflow-y:auto}
+
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes bnc{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fup{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+
+@media(min-width:500px){
+  body{background:#060b14}
+  #app{border-radius:40px;height:92vh;max-height:860px;box-shadow:0 0 0 1px #1e293b,0 40px 80px rgba(0,0,0,.7)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- API Key Screen -->
+  <div id="aks">
+    <div style="font-size:52px;margin-bottom:14px">💊</div>
+    <div style="font-size:24px;font-weight:300;color:#f1f5f9;margin-bottom:5px">MedLocate</div>
+    <div style="font-size:13px;color:#64748b;text-align:center;line-height:1.6;margin-bottom:26px">
+      Enter your FREE Gemini API key.<br/>Stored only on this device.
+    </div>
+    <div class="akw">
+      <span style="color:#64748b;font-size:15px">🔑</span>
+      <input type="password" id="aki" placeholder="AIzaSy…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')saveKey()"/>
+      <button onclick="toggleVis()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:15px;padding:0">👁</button>
+    </div>
+    <button class="aksv" onclick="saveKey()">Continue →</button>
+    <div id="ake" style="color:var(--red);font-size:12px;text-align:center;margin-top:8px;min-height:16px"></div>
+    <div style="font-size:11px;color:#475569;text-align:center;line-height:1.6;margin-top:14px">
+      Get your <b style="color:#f1f5f9">FREE</b> Gemini key at<br/>
+      <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--green);text-decoration:none">aistudio.google.com/apikey</a>
+    </div>
+  </div>
+
+  <!-- Search Tab -->
+  <div id="ps" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Find Medicine</div>
+      <div class="chips">
+        <div class="chip"><div class="chipv" id="si">0</div><div class="chipl">Items</div></div>
+        <div class="chip"><div class="chipv" id="sp">0</div><div class="chipl">Photos</div></div>
+      </div>
+    </div>
+    <div class="sbar">
+      <div class="sw">
+        <span style="color:#64748b;font-size:15px">🔍</span>
+        <input type="text" id="sq" placeholder="Medicine name, brand, symptom…" onkeydown="if(event.key==='Enter')doSearch()"/>
+        <button id="xb" onclick="clrSearch()" style="display:none;background:none;border:none;color:#64748b;cursor:pointer;font-size:13px">✕</button>
+      </div>
+      <button class="sfnd" onclick="doSearch()">Find</button>
+    </div>
+    <div class="scr" id="sa"></div>
+  </div>
+
+  <!-- Upload Tab -->
+  <div id="pu" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Add Photos</div>
+      <div class="hsub">AI reads every medicine label</div>
+    </div>
+    <div class="scr" id="ua"></div>
+  </div>
+
+  <!-- Gallery Tab -->
+  <div id="pg" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Gallery</div>
+      <div class="hsub" id="gs">0 photos</div>
+    </div>
+    <div class="scr" id="ga"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <button class="nb" id="n0" onclick="tab('s')">
+      <span style="font-size:21px">🔍</span>
+      <span id="l0" style="font-size:10px;color:var(--green);font-weight:700">Search</span>
+      <span class="ndot" id="d0" style="display:block"></span>
+    </button>
+    <button class="nb" id="n1" onclick="tab('u')">
+      <span style="font-size:21px">📷</span>
+      <span id="l1" style="font-size:10px;color:var(--t3)">Upload</span>
+      <span class="ndot" id="d1"></span>
+    </button>
+    <button class="nb" id="n2" onclick="tab('g')">
+      <span style="font-size:21px">🗂️</span>
+      <span id="l2" style="font-size:10px;color:var(--t3)">Gallery</span>
+      <span class="ndot" id="d2"></span>
+    </button>
+  </nav>
+</div>
+
+<div id="mod"></div>
+<input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="onFiles(this)"/>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let items  = JSON.parse(localStorage.getItem('ml_i') || '[]');
+let photos = JSON.parse(localStorage.getItem('ml_p') || '[]');
+let sr = null; // search results
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  // Check if server already has a saved key
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if (d.hasKey) { hide('aks'); boot(); }
+  } catch(e) {
+    // Server not reachable
+    document.getElementById('ake').textContent = '⚠️ Cannot reach server — is server.py running?';
+  }
+});
+
+function boot() { stats(); rS(); rU(); rG(); }
+
+// ── API Key ───────────────────────────────────────────────────────────────────
+function toggleVis() {
+  const i = document.getElementById('aki');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+async function saveKey() {
+  const k = document.getElementById('aki').value.trim();
+  const e = document.getElementById('ake');
+  if (k.length < 20) { e.textContent = 'Key looks too short — paste the full key'; return; }
+  e.textContent = 'Saving & verifying…';
+  try {
+    const r = await fetch('/api/key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: k })
+    });
+    const d = await r.json();
+    if (d.error) { e.textContent = '❌ ' + d.error; return; }
+    // Quick test with Gemini
+    const t = await gemini('Say OK');
+    if (t.error) { e.textContent = '❌ Key rejected: ' + (t.error.message || JSON.stringify(t.error)); return; }
+    hide('aks'); boot();
+  } catch(ex) { e.textContent = '❌ ' + ex.message; }
+}
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem('ml_i', JSON.stringify(items));
+  localStorage.setItem('ml_p', JSON.stringify(photos));
+}
+
+function stats() {
+  document.getElementById('si').textContent = items.length;
+  document.getElementById('sp').textContent = photos.length;
+  document.getElementById('gs').textContent = photos.length + ' photo' + (photos.length !== 1 ? 's' : '') + ' · ' + items.length + ' items';
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function tab(t) {
+  const map = { s: ['ps','l0','d0'], u: ['pu','l1','d1'], g: ['pg','l2','d2'] };
+  Object.entries(map).forEach(([id, [pg, lb, dt]]) => {
+    const on = id === t;
+    document.getElementById(pg).style.display = on ? 'flex' : 'none';
+    document.getElementById(lb).style.color = on ? 'var(--green)' : 'var(--t3)';
+    document.getElementById(lb).style.fontWeight = on ? '700' : '400';
+    document.getElementById(dt).style.display = on ? 'block' : 'none';
+  });
+  if (t === 'u') rU();
+  if (t === 'g') rG();
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sq').addEventListener('input', function() {
+    document.getElementById('xb').style.display = this.value ? 'block' : 'none';
+    if (!this.value) { sr = null; rS(); }
+  });
+});
+
+function clrSearch() {
+  document.getElementById('sq').value = '';
+  document.getElementById('xb').style.display = 'none';
+  sr = null; rS();
+}
+
+async function doSearch() {
+  const q = document.getElementById('sq').value.trim();
+  if (!q) return;
+  sr = 'loading'; rS();
+  try {
+    const prompt = `Inventory: ${JSON.stringify(items.map(i => ({id:i.id,name:i.name,description:i.description})))}\n\nUser searching for: "${q}"\n\nReturn ONLY a JSON array of matching item IDs. Consider brand names, generic names, drug categories, and symptoms treated. No markdown:\n["id1","id2"]\nReturn [] if nothing matches.`;
+    const txt = await gemini(prompt);
+    const ids = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    sr = items.filter(i => ids.includes(i.id));
+  } catch(e) { sr = []; }
+  rS();
+}
+
+function rS() {
+  const el = document.getElementById('sa');
+  if (sr === null) {
+    if (!items.length) {
+      el.innerHTML = emp('🏪','Store is empty','Upload photos of your shelves — AI reads every medicine label automatically.','📷 Add Photos',"tab('u')");
+    } else {
+      el.innerHTML = `<div style="animation:fup .3s ease"><div class="slb">Recently Added</div>${items.slice(-6).reverse().map(cH).join('')}</div>`;
+    }
+  } else if (sr === 'loading') {
+    el.innerHTML = `<div style="text-align:center;padding:56px 0"><div class="dots">${[0,1,2].map(i=>`<div class="dot" style="animation-delay:${i*.15}s"></div>`).join('')}</div><div style="color:var(--t3);font-size:13px">Searching…</div></div>`;
+  } else if (!sr.length) {
+    el.innerHTML = emp('🔍','Not found',`Nothing matched "<b>${esc(document.getElementById('sq').value)}</b>". Try a different name or add more photos.`);
+  } else {
+    el.innerHTML = `<div style="animation:fup .3s ease"><div class="slb">${sr.length} result${sr.length!==1?'s':''} for "${esc(document.getElementById('sq').value)}"</div>${sr.map(cH).join('')}</div>`;
+  }
+}
+
+function cH(it) {
+  const t = it.photoDataUrl
+    ? `<div class="cth"><img src="${it.photoDataUrl}"/></div>`
+    : `<div class="cth">💊</div>`;
+  return `<div class="card" onclick="opIt('${it.id}')">${t}<div class="ci"><div class="cn">${esc(it.name)}</div><div class="cd">${esc(it.description)}</div><div class="cl">📍 ${esc(it.location)}</div></div><span style="color:#d1d5db;flex-shrink:0">›</span></div>`;
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+function rU() {
+  document.getElementById('ua').innerHTML = `
+    <div class="dz" onclick="document.getElementById('fi').click()">
+      <div style="font-size:34px;margin-bottom:9px">📷</div>
+      <div style="font-size:15px;font-weight:700;color:var(--gd);margin-bottom:4px">Upload shelf photos</div>
+      <div style="font-size:12px;color:#6b7280">Tap to choose · Multiple files OK</div>
+    </div>
+    <div class="tips">
+      <div class="tip"><span class="tdot"></span>Labels facing camera, bright lighting</div>
+      <div class="tip"><span class="tdot"></span>One shelf section per photo</div>
+      <div class="tip"><span class="tdot"></span>AI reads every printed label</div>
+    </div>
+    ${photos.length ? `<div class="slb">${photos.length} indexed photo${photos.length!==1?'s':''}</div>
+    ${photos.slice().reverse().map(p=>`<div class="prow" onclick="opPh('${p.id}')">
+      <img src="${p.dataUrl}"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.label)}</div>
+        <div style="font-size:11px;color:var(--t3)">${p.itemCount} items found</div>
+      </div><span style="color:#d1d5db">›</span></div>`).join('')}` : ''}`;
+}
+
+async function onFiles(input) {
+  const files = Array.from(input.files || []); if (!files.length) return;
+  input.value = '';
+  const el = document.getElementById('ua');
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    el.innerHTML = `<div class="prg">
+      <div class="pspin">⚙️</div>
+      <div style="font-size:19px;font-weight:600;color:var(--tx);margin-bottom:7px">Analyzing${files.length>1?' '+(i+1)+'/'+files.length:''}</div>
+      <div id="ps2" style="font-size:12px;color:var(--t2);margin-bottom:18px">Compressing image…</div>
+      <div style="background:var(--bd);border-radius:99px;height:5px;overflow:hidden">
+        <div id="pf" style="height:100%;background:linear-gradient(90deg,var(--green),#34d399);border-radius:99px;transition:width .4s;width:10%"></div>
+      </div>
+    </div>`;
+
+    try {
+      // Compress
+      const { b64, dataUrl } = await compress(file);
+      setP('Sending to Gemini AI…', 40);
+
+      const photoId = `ph_${Date.now()}_${i}`;
+      const label   = file.name.replace(/\.[^.]+$/, '');
+
+      const prompt = `You are scanning a pharmacy shelf photo.
+
+List every medicine, tablet, syrup, capsule, ointment, drop, supplement or medical product visible.
+Read the EXACT name printed on each label, box, bottle or strip.
+
+Return ONLY a JSON array — no markdown, no explanation:
+[{"name":"Crocin 500mg","description":"Paracetamol tablet for fever and pain","location":"top shelf, left side"}]
+
+Return [] only if there is truly no medicine packaging visible at all.`;
+
+      const rawText = await geminiVision(b64, prompt);
+      if (!rawText) throw new Error('Empty response from Gemini');
+
+      // Parse Gemini response — robust parser that handles cut-off JSON
+      let found = parseItems(rawText);
+
+      setP(`✓ Found ${found.length} item${found.length !== 1 ? 's' : ''}`, 100);
+
+      photos.push({ id: photoId, label, dataUrl, itemCount: found.length, addedAt: new Date().toISOString() });
+      found.forEach(p => {
+        const id = `it_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        items.push({ id, name: p.name, description: p.description || '', location: p.location || 'unknown', photoId, photoLabel: label, photoDataUrl: dataUrl, addedAt: new Date().toISOString() });
+      });
+      persist(); stats();
+      await sleep(300);
+
+      // Show result with raw response
+      el.innerHTML = `
+        <div style="background:#fff;border-radius:15px;padding:13px;margin-bottom:11px;border:1px solid var(--bd)">
+          <img src="${dataUrl}" style="width:100%;border-radius:9px;max-height:150px;object-fit:cover;margin-bottom:9px"/>
+          <div style="font-size:14px;font-weight:700;color:${found.length?'var(--tx)':'var(--red)'};margin-bottom:6px">
+            ${found.length ? '✅ Found '+found.length+' item'+(found.length!==1?'s':'') : '⚠️ 0 items detected'}
+          </div>
+          ${found.map(d=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #f1f5f9;color:var(--green)">💊 <b>${esc(d.name)}</b> <span style="color:var(--t2)">— ${esc(d.location)}</span></div>`).join('')}
+        </div>
+        <div class="rawbox">
+          <div style="color:#475569;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">📋 Gemini raw response</div>
+          <div class="rawtxt">${esc(rawText)}</div>
+        </div>
+        <button onclick="rU()" style="width:100%;background:#0f172a;color:#f1f5f9;border:none;border-radius:13px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:7px">← Upload Another</button>
+        <button onclick="tab('s')" style="width:100%;background:var(--green);color:#fff;border:none;border-radius:13px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">Go to Search →</button>`;
+
+    } catch(e) {
+      el.innerHTML = `
+        <div style="background:#fff;border-radius:15px;padding:18px;margin-bottom:11px;border:1px solid #fca5a5;text-align:center">
+          <div style="font-size:34px;margin-bottom:9px">❌</div>
+          <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:7px">Error</div>
+          <div style="font-size:11px;color:#475569;font-family:monospace;background:#f8fafc;border-radius:7px;padding:9px;text-align:left;word-break:break-all;line-height:1.55">${esc(e.message||String(e))}</div>
+        </div>
+        <button onclick="rU()" style="width:100%;background:#0f172a;color:#f1f5f9;border:none;border-radius:13px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">Try Again</button>`;
+    }
+  }
+}
+
+function setP(t,w) {
+  const s=document.getElementById('ps2'), f=document.getElementById('pf');
+  if(s) s.textContent=t; if(f) f.style.width=w+'%';
+}
+
+// ── Gallery ───────────────────────────────────────────────────────────────────
+function rG() {
+  stats();
+  const el = document.getElementById('ga');
+  if (!photos.length) {
+    el.innerHTML = emp('🖼️','No photos yet','Upload shelf photos to build your gallery.','Add Photos',"tab('u')");
+    return;
+  }
+  el.innerHTML = `<div class="pgrid">${photos.slice().reverse().map(p=>`
+    <div class="gc" onclick="opPh('${p.id}')">
+      <img src="${p.dataUrl}" alt=""/>
+      <div class="gol">
+        <div style="color:#fff;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.label)}</div>
+        <div style="color:var(--green);font-size:10px">${p.itemCount} items</div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function opIt(id) {
+  const it = items.find(i=>i.id===id); if(!it) return;
+  const hero = it.photoDataUrl ? `<img src="${it.photoDataUrl}"/>` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:48px">💊</div>`;
+  mod(`<div class="mhro">${hero}<div class="movl"></div><button class="mcls" onclick="clsMod()">✕</button></div>
+    <div class="mbd">
+      <div class="mbdg">💊 Medicine</div>
+      <div class="mnm">${esc(it.name)}</div>
+      <div class="mds">${esc(it.description)}</div>
+      <div class="lc">
+        <div class="lcl">📍 Shelf Location</div>
+        <div class="lcv">${esc(it.location)}</div>
+        <div class="lcp">📷 ${esc(it.photoLabel)}</div>
+      </div>
+      <button class="dlb" onclick="delIt('${it.id}')">🗑 Remove</button>
+    </div>`);
+}
+
+function opPh(id) {
+  const ph = photos.find(p=>p.id===id); if(!ph) return;
+  const pi = items.filter(i=>i.photoId===id);
+  mod(`<div class="mhro"><img src="${ph.dataUrl}"/><div class="movl"></div><button class="mcls" onclick="clsMod()">✕</button>
+    <div style="position:absolute;bottom:13px;left:15px">
+      <div style="color:#fff;font-size:16px;font-weight:700">${esc(ph.label)}</div>
+      <div style="color:var(--green);font-size:11px">${ph.itemCount} items</div>
+    </div></div>
+    <div class="mbd">
+      <div class="slb">Items in this photo</div>
+      ${pi.map(it=>`<div class="mit" onclick="clsMod();setTimeout(()=>opIt('${it.id}'),180)">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--tx)">${esc(it.name)}</div>
+          <div style="font-size:11px;color:var(--green);font-weight:600">📍 ${esc(it.location)}</div>
+        </div>
+        <span style="color:#d1d5db">›</span>
+      </div>`).join('')}
+      <button class="dlb" onclick="delPh('${ph.id}')">🗑 Delete photo &amp; ${pi.length} items</button>
+    </div>`);
+}
+
+function mod(h) {
+  document.getElementById('mod').innerHTML = `<div class="mback" onclick="clsMod()"><div class="msh" onclick="event.stopPropagation()"><div class="mhnd"></div>${h}</div></div>`;
+}
+function clsMod() { document.getElementById('mod').innerHTML = ''; }
+
+function delIt(id) {
+  if (!confirm('Remove this item?')) return;
+  items = items.filter(i=>i.id!==id); persist(); stats(); clsMod(); rS(); rU();
+}
+function delPh(id) {
+  const n = items.filter(i=>i.photoId===id).length;
+  if (!confirm(`Delete photo and its ${n} items?`)) return;
+  photos = photos.filter(p=>p.id!==id); items = items.filter(i=>i.photoId!==id);
+  persist(); stats(); clsMod(); rG(); rU(); rS();
+}
+
+// ── Gemini API (via server proxy — no CORS, 100% free) ────────────────────────
+
+// Text-only call (for search)
+async function gemini(prompt) {
+  const res = await fetch('/api/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// Vision call (for photo analysis)
+async function geminiVision(image_b64, prompt) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image_b64, prompt })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// ── Image compression ─────────────────────────────────────────────────────────
+function compress(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height, MAX = 1200;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = c.toDataURL('image/jpeg', 0.82);
+      resolve({ b64: dataUrl.split(',')[1], dataUrl });
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Robust JSON parser — handles cut-off, partial, wrapped responses ──────────
+function parseItems(raw) {
+  if (!raw) return [];
+  // Strip markdown fences
+  const text = raw.replace(/```json|```/g, '').trim();
+
+  // Strategy 1: find complete JSON array
+  const arrMatch = text.match(/\[[\s\S]*\]/);
+  if (arrMatch) {
+    try {
+      const r = JSON.parse(arrMatch[0]);
+      if (Array.isArray(r) && r.length) return r.filter(x => x.name);
+    } catch {}
+  }
+
+  // Strategy 2: response is cut off — repair it by closing open brackets
+  if (text.includes('"name"')) {
+    try {
+      let t = text;
+      // Remove everything before first [
+      const start = t.indexOf('[');
+      if (start !== -1) t = t.slice(start);
+      else t = '[' + t;
+      // Count unclosed braces and brackets
+      let braces = 0, brackets = 0;
+      for (const c of t) {
+        if (c === '{') braces++;
+        else if (c === '}') braces--;
+        else if (c === '[') brackets++;
+        else if (c === ']') brackets--;
+      }
+      // Close any open string (heuristic: remove trailing partial value)
+      t = t.replace(/,\s*"[^"]*$/, ''); // remove trailing partial key
+      t = t.replace(/"[^"]*$/, '"unknown"'); // close open string value
+      // Close unclosed braces
+      while (braces > 0) { t += '}'; braces--; }
+      // Close unclosed brackets
+      while (brackets > 0) { t += ']'; brackets--; }
+      const r = JSON.parse(t);
+      if (Array.isArray(r) && r.length) return r.filter(x => x.name);
+    } catch {}
+  }
+
+  // Strategy 3: extract every "name" value directly — always works even on garbage
+  if (text.includes('"name"')) {
+    const names = [...text.matchAll(/"name"\s*:\s*"([^"]+)"/g)].map(m => m[1]);
+    const descs = [...text.matchAll(/"description"\s*:\s*"([^"]+)"/g)].map(m => m[1]);
+    const locs  = [...text.matchAll(/"location"\s*:\s*"([^"]+)"/g)].map(m => m[1]);
+    if (names.length) {
+      return names.map((n, i) => ({
+        name: n,
+        description: descs[i] || 'Medicine',
+        location: locs[i] || 'shelf'
+      }));
+    }
+  }
+
+  return [];
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function hide(id)  { document.getElementById(id).style.display = 'none'; }
+function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function emp(icon, title, text, btn, action) {
+  return `<div class="emp"><div class="eic">${icon}</div><div class="eti">${title}</div><div class="etx">${text}</div>${btn?`<button class="ebt" onclick="${action}">${btn}</button>`:''}</div>`;
+}
+</script>
+</body>
+</html>
