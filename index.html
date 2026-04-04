@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#0c1120"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MedLocate"/>
+<title>MedLocate</title>
+<style>
+:root{
+  --bg:#0c1120;--green:#10b981;--gl:#ecfdf5;--gm:#d1fae5;--gd:#065f46;
+  --tx:#0f172a;--t2:#475569;--t3:#94a3b8;--bd:#e2e8f0;--red:#ef4444;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:var(--tx)}
+input,button,select{font-family:inherit}
+::-webkit-scrollbar{display:none}
+body{display:flex;align-items:center;justify-content:center}
+#app{width:100%;max-width:430px;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#f1f5f9;position:relative;overflow:hidden}
+
+/* Header */
+.hdr{background:linear-gradient(160deg,#0c1120,#0f2744);padding:calc(var(--st)+12px) 16px 12px;flex-shrink:0}
+.eye{color:var(--green);font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:1px}
+.htit{color:#f1f5f9;font-size:19px;font-weight:300}
+.hsub{color:#64748b;font-size:11px;margin-top:2px}
+.chips{display:flex;gap:6px;margin-top:9px;align-items:center}
+.chip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px 10px;text-align:center}
+.chipv{color:var(--green);font-size:15px;font-weight:700;line-height:1}
+.chipl{color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:.8px}
+.keybtn{margin-left:auto;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;color:#94a3b8;font-size:10px;cursor:pointer;white-space:nowrap}
+
+/* Search bar */
+.sbar{background:linear-gradient(160deg,#0c1120,#0f2744);padding:0 12px 12px;display:flex;gap:7px;flex-shrink:0}
+.sw{flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:6px;min-width:0}
+.sw:focus-within{border-color:rgba(16,185,129,.5)}
+.sw input{flex:1;background:transparent;border:none;outline:none;color:#f1f5f9;font-size:14px;min-width:0;width:0}
+.sfnd{background:var(--green);color:#fff;border:none;border-radius:11px;padding:9px 13px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0}
+
+/* Scroll */
+.scr{flex:1;overflow-y:auto;overflow-x:hidden;padding:11px;-webkit-overflow-scrolling:touch}
+
+/* Cards */
+.card{background:#fff;border-radius:13px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:9px;border:1.5px solid var(--bd);cursor:pointer;transition:border-color .2s,background .15s;position:relative;overflow:hidden}
+.card:active{background:var(--gl)}
+.card.hit{border-color:var(--green);background:var(--gl);animation:pulse 1s ease 2}
+.cth{width:48px;height:48px;border-radius:8px;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.cth img{width:100%;height:100%;object-fit:cover}
+.ci{flex:1;min-width:0}
+.cn{font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.cd{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.cl{font-size:10px;color:var(--green);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbadge{position:absolute;top:5px;right:5px;background:var(--green);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px}
+
+/* Labels */
+.slb{color:var(--t3);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+
+/* Empty */
+.emp{text-align:center;padding:36px 16px;animation:fup .4s ease}
+.eic{font-size:46px;margin-bottom:10px}
+.eti{font-size:17px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.etx{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:18px}
+.ebt{background:var(--bg);color:var(--green);border:none;border-radius:11px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* Drop zone */
+.dz{background:linear-gradient(135deg,var(--gl),var(--gm));border:2px dashed var(--green);border-radius:15px;padding:26px 16px;text-align:center;cursor:pointer;margin-bottom:10px}
+.dz:active{opacity:.85}
+
+/* Shelf picker */
+.shelf-pick{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--bd);margin-bottom:10px}
+.shelf-pick label{font-size:11px;color:var(--t2);display:block;margin-bottom:6px;font-weight:600}
+.shelf-pick select{width:100%;background:#f8fafc;border:1.5px solid var(--bd);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--tx);outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.shelf-pick select:focus{border-color:var(--green)}
+.shelf-custom{display:none;margin-top:7px}
+.shelf-custom input{width:100%;background:#f8fafc;border:1.5px solid var(--bd);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--tx);outline:none}
+.shelf-custom input:focus{border-color:var(--green)}
+
+/* Tips */
+.tips{background:#fff;border-radius:12px;padding:11px 13px;border:1px solid var(--bd);margin-bottom:10px}
+.tip{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);margin-bottom:4px}
+.tip:last-child{margin-bottom:0}
+.tdot{width:4px;height:4px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+/* Photo row */
+.prow{background:#fff;border-radius:11px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:9px;cursor:pointer;border:1px solid var(--bd)}
+.prow:active{background:var(--gl)}
+.prow img{width:40px;height:40px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.pname{font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{font-size:10px;color:var(--t3)}
+
+/* Progress */
+.prg{background:#fff;border-radius:15px;padding:28px 18px;text-align:center}
+.pspin{font-size:36px;display:inline-block;animation:spin 1.4s linear infinite;margin-bottom:10px}
+
+/* Gallery */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.gc{border-radius:11px;overflow:hidden;aspect-ratio:1;position:relative;cursor:pointer;background:var(--bd)}
+.gc:active{opacity:.85}
+.gc img{width:100%;height:100%;object-fit:cover}
+.gol{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.72));padding:16px 8px 7px}
+.glb{color:#fff;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcn{color:var(--green);font-size:9px}
+
+/* Loader */
+.dots{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:bnc .8s ease infinite alternate}
+
+/* Nav */
+#nav{background:#fff;border-top:1px solid var(--bd);display:flex;padding:5px 0 calc(var(--sb)+5px);flex-shrink:0;position:relative}
+.nb{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0}
+.nb:active{transform:scale(.88)}
+.ndot{width:3px;height:3px;border-radius:50%;background:var(--green);display:none}
+/* Watermark */
+#wm{position:absolute;bottom:calc(var(--sb)+3px);right:8px;font-size:8px;color:#10b981;opacity:.5;letter-spacing:.3px;pointer-events:none;font-weight:600}
+
+/* Modal */
+.mback{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;z-index:100;backdrop-filter:blur(4px);animation:fi .2s ease}
+.msh{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92%;overflow-y:auto;animation:su .25s cubic-bezier(.34,1.56,.64,1);padding-bottom:calc(var(--sb)+14px)}
+.mhnd{width:30px;height:4px;background:var(--bd);border-radius:99px;margin:9px auto 0}
+
+/* Photo hero with highlight */
+.mhro{position:relative;background:#0a0a1a;overflow:hidden;margin-top:7px;flex-shrink:0}
+.mhro .simg{width:100%;max-height:230px;object-fit:contain;display:block}
+.ph-box{position:absolute;border:3px solid #facc15;border-radius:5px;background:rgba(250,204,21,.1);pointer-events:none}
+.ph-pin{position:absolute;background:#facc15;color:#000;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;transform:translateY(-100%)}
+.mcls{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.5);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:13px;z-index:2}
+
+.mbd{padding:13px 15px}
+.mbdg{display:inline-flex;align-items:center;background:var(--gl);color:#059669;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px}
+.mnm{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:3px;word-break:break-word}
+.mds{font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:11px}
+.lc{background:linear-gradient(135deg,var(--gl),var(--gm));border-radius:11px;padding:11px 13px;border:1px solid #a7f3d0;margin-bottom:11px}
+.lcl{color:var(--gd);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.lcv{font-size:14px;color:var(--tx);font-weight:700;margin-bottom:2px;word-break:break-word}
+.lcp{font-size:10px;color:#6b7280}
+.dlb{width:100%;background:none;border:1px solid #fca5a5;color:var(--red);border-radius:11px;padding:10px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px}
+.dlb:active{background:#fef2f2}
+.mit{background:#f8fafc;border-radius:9px;padding:8px 11px;margin-bottom:5px;cursor:pointer;border:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.mit:active{background:var(--gl)}
+
+/* Edit form */
+.elbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;font-weight:600}
+.einp{width:100%;background:#f8fafc;border:1.5px solid var(--bd);border-radius:9px;padding:8px 10px;font-size:13px;color:var(--tx);outline:none;margin-bottom:9px}
+.einp:focus{border-color:var(--green)}
+.sbtn{width:100%;background:var(--green);color:#fff;border:none;border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px}
+.sbtn:active{background:#059669}
+.cbtn{width:100%;background:none;border:1px solid var(--bd);color:var(--t2);border-radius:11px;padding:10px;font-size:12px;cursor:pointer}
+
+/* API key */
+#aks{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px 22px}
+#aks.show{display:flex}
+.akw{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:11px 13px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.akw:focus-within{border-color:rgba(16,185,129,.5)}
+.akw input{flex:1;background:transparent;border:none;outline:none;color:#f1f5f9;font-size:13px;font-family:monospace;min-width:0}
+.aksv{width:100%;background:var(--green);color:#fff;border:none;border-radius:11px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+
+/* Raw box */
+.rawbox{background:#0c1120;border-radius:9px;padding:9px;margin-bottom:9px}
+.rawtxt{color:var(--green);font-size:9px;font-family:monospace;line-height:1.5;white-space:pre-wrap;word-break:break-all;max-height:100px;overflow-y:auto}
+
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes bnc{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 8px rgba(16,185,129,0)}}
+
+@media(min-width:500px){
+  body{background:#060b14}
+  #app{border-radius:36px;height:92vh;max-height:860px;box-shadow:0 0 0 1px #1e293b,0 40px 80px rgba(0,0,0,.7)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- API Key Screen -->
+  <div id="aks">
+    <div style="font-size:48px;margin-bottom:10px">💊</div>
+    <div style="font-size:20px;font-weight:300;color:#f1f5f9;margin-bottom:3px">MedLocate</div>
+    <div style="font-size:11px;color:#64748b;text-align:center;line-height:1.6;margin-bottom:20px">
+      Enter your FREE Gemini API key.<br/>Saved permanently — asked only once.
+    </div>
+    <div class="akw">
+      <span style="color:#64748b;font-size:13px">🔑</span>
+      <input type="password" id="aki" placeholder="AIzaSy…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')saveKey()"/>
+      <button onclick="toggleVis()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:13px;flex-shrink:0">👁</button>
+    </div>
+    <button class="aksv" onclick="saveKey()">Save & Continue →</button>
+    <div id="ake" style="color:var(--red);font-size:11px;text-align:center;margin-top:6px;min-height:14px"></div>
+    <div style="font-size:10px;color:#475569;text-align:center;margin-top:10px">
+      Get free key → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--green)">aistudio.google.com/apikey</a>
+    </div>
+    <button id="akskip" onclick="skipKey()" style="display:none;background:none;border:none;color:#475569;font-size:11px;cursor:pointer;margin-top:12px;text-decoration:underline">Skip (use saved key)</button>
+  </div>
+
+  <!-- Search Tab -->
+  <div id="ps" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Find Medicine</div>
+      <div class="chips">
+        <div class="chip"><div class="chipv" id="si">0</div><div class="chipl">Items</div></div>
+        <div class="chip"><div class="chipv" id="sp">0</div><div class="chipl">Photos</div></div>
+        <button class="keybtn" onclick="showKey()">🔑 API Key</button>
+      </div>
+    </div>
+    <div class="sbar">
+      <div class="sw">
+        <span style="color:#64748b;font-size:13px;flex-shrink:0">🔍</span>
+        <input type="text" id="sq" placeholder="Type any part of medicine name…" onkeydown="if(event.key==='Enter')doSearch()" oninput="onSqInput(this)"/>
+        <button id="xb" onclick="clrSearch()" style="display:none;background:none;border:none;color:#64748b;cursor:pointer;font-size:12px;flex-shrink:0">✕</button>
+      </div>
+      <button class="sfnd" onclick="doSearch()">Find</button>
+    </div>
+    <!-- Live suggestions -->
+    <div id="sugg" style="background:linear-gradient(160deg,#0c1120,#0f2744);padding:0 12px 8px;display:none;flex-shrink:0">
+      <div id="sugg-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+    <div class="scr" id="sa"></div>
+  </div>
+
+  <!-- Upload Tab -->
+  <div id="pu" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Add Photos</div>
+      <div class="hsub">AI reads every medicine label</div>
+    </div>
+    <div class="scr" id="ua"></div>
+  </div>
+
+  <!-- Gallery Tab -->
+  <div id="pg" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="hdr">
+      <div class="eye">✚ MedLocate</div>
+      <div class="htit">Gallery</div>
+      <div class="hsub" id="gs">0 photos</div>
+    </div>
+    <div class="scr" id="ga"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <button class="nb" id="n0" onclick="tab('s')">
+      <span style="font-size:19px">🔍</span>
+      <span id="l0" style="font-size:9px;color:var(--green);font-weight:700">Search</span>
+      <span class="ndot" id="d0" style="display:block"></span>
+    </button>
+    <button class="nb" id="n1" onclick="tab('u')">
+      <span style="font-size:19px">📷</span>
+      <span id="l1" style="font-size:9px;color:var(--t3)">Upload</span>
+      <span class="ndot" id="d1"></span>
+    </button>
+    <button class="nb" id="n2" onclick="tab('g')">
+      <span style="font-size:19px">🗂️</span>
+      <span id="l2" style="font-size:9px;color:var(--t3)">Gallery</span>
+      <span class="ndot" id="d2"></span>
+    </button>
+    <div id="wm">by Mirza Faizan</div>
+  </nav>
+</div>
+
+<div id="mod"></div>
+<input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="onFiles(this)"/>
+<!-- Hidden shelf input passed during upload -->
+<input type="hidden" id="cur-shelf" value=""/>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let items  = JSON.parse(localStorage.getItem('ml_i') || '[]');
+let photos = JSON.parse(localStorage.getItem('ml_p') || '[]');
+let sr = null;
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if (d.hasKey) { boot(); return; }
+  } catch(e) {
+    document.getElementById('ake').textContent = '⚠ Cannot reach server';
+  }
+  const saved = localStorage.getItem('ml_k');
+  if (saved) { document.getElementById('aki').value=saved; document.getElementById('akskip').style.display='block'; }
+  document.getElementById('aks').classList.add('show');
+});
+
+function boot() { stats(); rS(); rU(); rG(); }
+
+// ── Key ───────────────────────────────────────────────────────────────────────
+function toggleVis(){ const i=document.getElementById('aki'); i.type=i.type==='password'?'text':'password'; }
+function showKey(){ const s=localStorage.getItem('ml_k')||''; document.getElementById('aki').value=s; if(s)document.getElementById('akskip').style.display='block'; document.getElementById('aks').classList.add('show'); }
+function skipKey(){ document.getElementById('aks').classList.remove('show'); boot(); }
+async function saveKey(){
+  const k=document.getElementById('aki').value.trim(), e=document.getElementById('ake');
+  if(k.length<20){e.textContent='Key too short';return;}
+  e.textContent='Saving…';
+  try{
+    const r=await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k})});
+    const d=await r.json();
+    if(d.error){e.textContent='❌ '+d.error;return;}
+    localStorage.setItem('ml_k',k);
+    document.getElementById('aks').classList.remove('show');
+    boot();
+  }catch(ex){e.textContent='❌ '+ex.message;}
+}
+
+// ── Persist ───────────────────────────────────────────────────────────────────
+function persist(){ localStorage.setItem('ml_i',JSON.stringify(items)); localStorage.setItem('ml_p',JSON.stringify(photos)); }
+function stats(){
+  document.getElementById('si').textContent=items.length;
+  document.getElementById('sp').textContent=photos.length;
+  document.getElementById('gs').textContent=photos.length+' photo'+(photos.length!==1?'s':'')+' · '+items.length+' items';
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function tab(t){
+  const map={s:['ps','l0','d0'],u:['pu','l1','d1'],g:['pg','l2','d2']};
+  Object.entries(map).forEach(([id,[pg,lb,dt]])=>{
+    const on=id===t;
+    document.getElementById(pg).style.display=on?'flex':'none';
+    document.getElementById(lb).style.color=on?'var(--green)':'var(--t3)';
+    document.getElementById(lb).style.fontWeight=on?'700':'400';
+    document.getElementById(dt).style.display=on?'block':'none';
+  });
+  if(t==='u')rU(); if(t==='g')rG();
+}
+
+// ── Search — fuzzy local + AI fallback ────────────────────────────────────────
+function onSqInput(inp){
+  const v=inp.value.trim();
+  document.getElementById('xb').style.display=v?'block':'none';
+  if(!v){ sr=null; rS(); hideSugg(); return; }
+  // Live fuzzy suggestions while typing
+  showSuggestions(v);
+}
+
+function showSuggestions(q){
+  const matches = fuzzySearch(q, items);
+  const sugg = document.getElementById('sugg');
+  const list = document.getElementById('sugg-list');
+  if(!matches.length){ sugg.style.display='none'; return; }
+  sugg.style.display='block';
+  list.innerHTML = matches.slice(0,6).map(it=>`
+    <button onclick="quickSearch('${esc(it.name)}')"
+      style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:99px;padding:4px 10px;color:#10b981;font-size:11px;cursor:pointer;white-space:nowrap">
+      ${esc(it.name)}
+    </button>`).join('');
+}
+function hideSugg(){ document.getElementById('sugg').style.display='none'; }
+function quickSearch(name){ document.getElementById('sq').value=name; hideSugg(); doSearch(); }
+
+// Fuzzy search — no API needed, works offline, partial name match
+function fuzzySearch(q, items){
+  const lq = q.toLowerCase().replace(/\s+/g,' ').trim();
+  const words = lq.split(' ');
+  return items.filter(it=>{
+    const hay = (it.name+' '+it.description+' '+it.location).toLowerCase();
+    return words.every(w => hay.includes(w));
+  }).sort((a,b)=>{
+    // Exact start match ranks higher
+    const an = a.name.toLowerCase(), bn = b.name.toLowerCase();
+    if(an.startsWith(lq) && !bn.startsWith(lq)) return -1;
+    if(!an.startsWith(lq) && bn.startsWith(lq)) return 1;
+    return 0;
+  });
+}
+
+function clrSearch(){ document.getElementById('sq').value=''; document.getElementById('xb').style.display='none'; hideSugg(); sr=null; rS(); }
+
+async function doSearch(){
+  const q=document.getElementById('sq').value.trim(); if(!q)return;
+  hideSugg();
+  // First: instant fuzzy local search
+  const local = fuzzySearch(q, items);
+  if(local.length){ sr=local; rS(); return; }
+  // If nothing found locally, try AI
+  sr='loading'; rS();
+  try{
+    const prompt=`Inventory list:\n${items.map(i=>`ID:${i.id} NAME:${i.name} DESC:${i.description}`).join('\n')}\n\nUser typed: "${q}"\nFind medicines that match this partial/fuzzy search. Match by brand name, generic name, abbreviation, or what it treats.\nReturn ONLY a JSON array of matching IDs, no markdown:\n["id1","id2"]\nReturn [] if nothing matches.`;
+    const txt=await gemini(prompt);
+    const clean=txt.replace(/```json|```/g,'').trim();
+    const ids=JSON.parse(clean.match(/\[[\s\S]*\]/)?.[0]||'[]');
+    sr=items.filter(i=>ids.includes(i.id));
+  }catch(e){ sr=[]; }
+  rS();
+}
+
+function rS(){
+  const el=document.getElementById('sa');
+  if(sr===null){
+    if(!items.length){
+      el.innerHTML=emp('🏪','Store is empty','Upload photos of your shelves to get started.','📷 Add Photos',"tab('u')");
+    }else{
+      el.innerHTML=`<div style="animation:fup .3s ease"><div class="slb">Recently Added</div>${items.slice(-6).reverse().map(it=>cH(it)).join('')}</div>`;
+    }
+  }else if(sr==='loading'){
+    el.innerHTML=`<div style="text-align:center;padding:48px 0"><div class="dots">${[0,1,2].map(i=>`<div class="dot" style="animation-delay:${i*.15}s"></div>`).join('')}</div><div style="color:var(--t3);font-size:12px">Searching…</div></div>`;
+  }else if(!sr.length){
+    el.innerHTML=emp('🔍','Not found',`Nothing matched "<b>${esc(document.getElementById('sq').value)}</b>". Try a shorter word or add more photos.`);
+  }else{
+    const q=esc(document.getElementById('sq').value);
+    el.innerHTML=`<div style="animation:fup .3s ease"><div class="slb">${sr.length} match${sr.length!==1?'es':''} for "${q}"</div>${sr.map((it,i)=>cH(it,i+1)).join('')}</div>`;
+    setTimeout(()=>{ el.querySelectorAll('.card').forEach((c,i)=>{ setTimeout(()=>c.classList.add('hit'),i*100); }); },60);
+  }
+}
+function cH(it,num){
+  const t=it.photoDataUrl?`<div class="cth"><img src="${it.photoDataUrl}"/></div>`:`<div class="cth">💊</div>`;
+  const badge=num?`<div class="cbadge">#${num}</div>`:'';
+  return `<div class="card" onclick="opIt('${it.id}')">${t}<div class="ci"><div class="cn">${esc(it.name)}</div><div class="cd">${esc(it.description)}</div><div class="cl">📍 ${esc(it.location)}</div></div>${badge}</div>`;
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+const SHELVES=['Shelf 1 (Top)','Shelf 2','Shelf 3','Shelf 4','Shelf 5','Shelf 6 (Bottom)','Counter','Storage Room','Custom…'];
+
+function rU(){
+  document.getElementById('ua').innerHTML=`
+    <div class="shelf-pick">
+      <label>📦 Which shelf are you photographing?</label>
+      <select id="shelf-sel" onchange="shelfSelChange(this)">
+        <option value="">— Select shelf —</option>
+        ${SHELVES.map(s=>`<option value="${s}">${s}</option>`).join('')}
+      </select>
+      <div class="shelf-custom" id="shelf-custom">
+        <input type="text" id="shelf-custom-inp" placeholder="Enter custom shelf name…"/>
+      </div>
+    </div>
+    <div class="dz" onclick="startUpload()">
+      <div style="font-size:30px;margin-bottom:7px">📷</div>
+      <div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:2px">Upload shelf photo</div>
+      <div style="font-size:11px;color:#6b7280">Tap to choose · Multiple OK</div>
+    </div>
+    <div class="tips">
+      <div class="tip"><span class="tdot"></span>Select shelf name first, then upload</div>
+      <div class="tip"><span class="tdot"></span>Labels facing camera, good lighting</div>
+      <div class="tip"><span class="tdot"></span>AI auto-detects position within shelf</div>
+    </div>
+    ${photos.length?`<div class="slb">${photos.length} indexed photo${photos.length!==1?'s':''}</div>
+    ${photos.slice().reverse().map(p=>`<div class="prow" onclick="opPh('${p.id}')">
+      <img src="${p.dataUrl}"/>
+      <div style="flex:1;min-width:0"><div class="pname">${esc(p.label)}</div><div class="pmeta">${p.itemCount} items · ${esc(p.shelf||'')}</div></div>
+      <span style="color:#d1d5db">›</span></div>`).join('')}`:''}`;
+}
+
+function shelfSelChange(sel){
+  const custom=document.getElementById('shelf-custom');
+  custom.style.display=sel.value==='Custom…'?'block':'none';
+}
+function getShelf(){
+  const sel=document.getElementById('shelf-sel');
+  if(!sel) return '';
+  if(sel.value==='Custom…') return document.getElementById('shelf-custom-inp').value.trim()||'Custom shelf';
+  return sel.value||'';
+}
+function startUpload(){
+  const shelf=getShelf();
+  if(!shelf){ alert('Please select a shelf name first!'); return; }
+  document.getElementById('cur-shelf').value=shelf;
+  document.getElementById('fi').click();
+}
+
+async function onFiles(input){
+  const files=Array.from(input.files||[]); if(!files.length)return; input.value='';
+  const shelf=document.getElementById('cur-shelf').value||'Unknown shelf';
+  const el=document.getElementById('ua');
+
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    el.innerHTML=`<div class="prg">
+      <div class="pspin">⚙️</div>
+      <div style="font-size:16px;font-weight:600;color:var(--tx);margin-bottom:5px">Analyzing${files.length>1?' '+(i+1)+'/'+files.length:''}</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px">Shelf: <b>${esc(shelf)}</b></div>
+      <div id="ps2" style="font-size:11px;color:var(--t2);margin-bottom:14px">Compressing…</div>
+      <div style="background:var(--bd);border-radius:99px;height:4px;overflow:hidden">
+        <div id="pf" style="height:100%;background:linear-gradient(90deg,var(--green),#34d399);border-radius:99px;transition:width .4s;width:10%"></div>
+      </div></div>`;
+    try{
+      const {b64,dataUrl}=await compress(file);
+      setP('AI scanning labels…',40);
+      const photoId=`ph_${Date.now()}_${i}`;
+      const label=file.name.replace(/\.[^.]+$/,'');
+
+      const prompt=`You are scanning a pharmacy shelf photo. This photo is from: "${shelf}".
+
+For each medicine box, bottle, strip or packet you can see, extract:
+- "name": SHORT brand name + strength. Use the big printed name on the box. E.g. "Polyclav 200mg/5ml", "Dolo 650", "Crocin 500mg". NOT long generic names.
+- "description": Very short. E.g. "Antibiotic syrup", "Fever tablet"
+- "location": Position WITHIN this shelf. E.g. "Left side", "Center, 2nd row", "Right side, front". Be specific about left/center/right and front/back.
+- "x": item center horizontal % (0=left, 100=right)
+- "y": item center vertical % (0=top, 100=bottom)
+- "w": item width as % of image width
+- "h": item height as % of image height
+
+IMPORTANT: Do NOT add duplicate items. If same medicine appears multiple times (same name+strength), list it ONCE with location "multiple positions".
+
+Return ONLY a raw JSON array (no markdown):
+[{"name":"Polyclav 200mg/5ml","description":"Antibiotic syrup","location":"Left side","x":15,"y":50,"w":12,"h":30}]
+
+Return [] if no medicine packaging visible.`;
+
+      const rawText=await geminiVision(b64,prompt);
+      if(!rawText) throw new Error('Empty response');
+
+      const newFound=parseItems(rawText);
+      // Deduplicate: skip if same name already exists from a previous photo
+      const existingNames=new Set(items.map(it=>it.name.toLowerCase().trim()));
+      const deduped=newFound.filter(p=>{
+        const key=p.name.toLowerCase().trim();
+        if(existingNames.has(key)) return false;
+        existingNames.add(key);
+        return true;
+      });
+
+      setP(`✓ Found ${deduped.length} new item${deduped!==1?'s':''}`,100);
+
+      photos.push({id:photoId,label,shelf,dataUrl,itemCount:deduped.length,addedAt:new Date().toISOString()});
+      deduped.forEach(p=>{
+        const id=`it_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        const fullLoc=shelf+(p.location&&p.location!=='shelf'?' → '+p.location:'');
+        items.push({id,name:p.name,description:p.description||'',location:fullLoc,x:p.x??null,y:p.y??null,w:p.w??null,h:p.h??null,photoId,photoLabel:label,photoDataUrl:dataUrl,addedAt:new Date().toISOString()});
+      });
+      persist();stats();await sleep(300);
+
+      el.innerHTML=`
+        <div style="background:#fff;border-radius:13px;padding:11px;margin-bottom:9px;border:1px solid var(--bd)">
+          <img src="${dataUrl}" style="width:100%;border-radius:7px;max-height:130px;object-fit:cover;margin-bottom:7px"/>
+          <div style="font-size:12px;font-weight:700;color:${deduped.length?'var(--tx)':'var(--red)'};margin-bottom:4px">
+            ${deduped.length?'✅ Added '+deduped.length+' item'+(deduped.length!==1?'s':''):'⚠️ No new items (may all be duplicates)'}
+          </div>
+          ${deduped.map(d=>`<div style="font-size:10px;padding:2px 0;border-bottom:1px solid #f1f5f9;color:var(--green)">💊 <b>${esc(d.name)}</b> <span style="color:var(--t2)">— ${esc(d.location)}</span></div>`).join('')}
+        </div>
+        <div class="rawbox"><div style="color:#475569;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Gemini response</div><div class="rawtxt">${esc(rawText)}</div></div>
+        <button onclick="rU()" style="width:100%;background:#0f172a;color:#f1f5f9;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:6px">← Upload Another</button>
+        <button onclick="tab('s')" style="width:100%;background:var(--green);color:#fff;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer">Go to Search →</button>`;
+    }catch(e){
+      el.innerHTML=`<div style="background:#fff;border-radius:13px;padding:14px;margin-bottom:9px;border:1px solid #fca5a5;text-align:center">
+        <div style="font-size:28px;margin-bottom:7px">❌</div>
+        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:5px">Error</div>
+        <div style="font-size:10px;color:#64748b;font-family:monospace;background:#f8fafc;border-radius:6px;padding:7px;text-align:left;word-break:break-all;line-height:1.5">${esc(e.message||String(e))}</div>
+      </div>
+      <button onclick="rU()" style="width:100%;background:#0f172a;color:#f1f5f9;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer">Try Again</button>`;
+    }
+  }
+}
+function setP(t,w){ const s=document.getElementById('ps2'),f=document.getElementById('pf'); if(s)s.textContent=t; if(f)f.style.width=w+'%'; }
+
+// ── Gallery ───────────────────────────────────────────────────────────────────
+function rG(){
+  stats(); const el=document.getElementById('ga');
+  if(!photos.length){ el.innerHTML=emp('🖼️','No photos yet','Upload shelf photos to build your gallery.','Add Photos',"tab('u')"); return; }
+  el.innerHTML=`<div class="pgrid">${photos.slice().reverse().map(p=>`
+    <div class="gc" onclick="opPh('${p.id}')"><img src="${p.dataUrl}" alt=""/>
+      <div class="gol"><div class="glb">${esc(p.shelf||p.label)}</div><div class="gcn">${p.itemCount} items</div></div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Item Modal ────────────────────────────────────────────────────────────────
+function opIt(id, editMode){
+  const it=items.find(i=>i.id===id); if(!it)return;
+
+  // Hero with yellow highlight box on exact position
+  let heroHtml='';
+  if(it.photoDataUrl){
+    let highlight='';
+    if(it.x!=null && it.y!=null && it.w!=null && it.h!=null){
+      const L=Math.max(0,it.x-it.w/2), T=Math.max(0,it.y-it.h/2);
+      const W=Math.min(it.w,100-L), H=Math.min(it.h,100-T);
+      highlight=`<div class="ph-box" style="left:${L}%;top:${T}%;width:${W}%;height:${H}%"></div>
+                 <div class="ph-pin" style="left:${L}%;top:${T}%">${esc(it.name)}</div>`;
+    }
+    heroHtml=`<div class="mhro"><img class="simg" src="${it.photoDataUrl}"/>${highlight}<button class="mcls" onclick="clsMod()">✕</button></div>`;
+  }else{
+    heroHtml=`<div class="mhro" style="height:80px"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px">💊</div><button class="mcls" onclick="clsMod()">✕</button></div>`;
+  }
+
+  if(editMode){
+    mod(`${heroHtml}<div class="mbd">
+      <div class="mbdg">✏️ Edit</div>
+      <div class="elbl">Medicine Name</div>
+      <input class="einp" id="ei-name" value="${esc(it.name)}" placeholder="e.g. Crocin 500mg"/>
+      <div class="elbl">Description</div>
+      <input class="einp" id="ei-desc" value="${esc(it.description)}" placeholder="e.g. Fever tablet"/>
+      <div class="elbl">Location</div>
+      <input class="einp" id="ei-loc" value="${esc(it.location)}" placeholder="e.g. Shelf 1 → Left side"/>
+      <button class="sbtn" onclick="saveEdit('${it.id}')">✓ Save</button>
+      <button class="cbtn" onclick="opIt('${it.id}')">Cancel</button>
+    </div>`);
+    return;
+  }
+
+  mod(`${heroHtml}<div class="mbd">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <div class="mbdg">💊 Medicine</div>
+      <button onclick="opIt('${it.id}',true)" style="background:none;border:1px solid var(--bd);color:var(--t2);border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer">✏️ Edit</button>
+    </div>
+    <div class="mnm">${esc(it.name)}</div>
+    <div class="mds">${esc(it.description)}</div>
+    <div class="lc">
+      <div class="lcl">📍 Shelf Location</div>
+      <div class="lcv">${esc(it.location)}</div>
+      <div class="lcp">📷 ${esc(it.photoLabel)}</div>
+    </div>
+    <button class="dlb" onclick="delIt('${it.id}')">🗑 Remove</button>
+  </div>`);
+}
+
+function opPh(id){
+  const ph=photos.find(p=>p.id===id); if(!ph)return;
+  const pi=items.filter(i=>i.photoId===id);
+  mod(`<div class="mhro"><img class="simg" src="${ph.dataUrl}"/><button class="mcls" onclick="clsMod()">✕</button>
+    <div style="position:absolute;bottom:9px;left:11px">
+      <div style="color:#fff;font-size:14px;font-weight:700">${esc(ph.shelf||ph.label)}</div>
+      <div style="color:var(--green);font-size:10px">${ph.itemCount} items</div>
+    </div></div>
+    <div class="mbd">
+      <div class="slb">Items in this photo</div>
+      ${pi.map(it=>`<div class="mit" onclick="clsMod();setTimeout(()=>opIt('${it.id}'),150)">
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(it.name)}</div>
+        <div style="font-size:10px;color:var(--green);font-weight:600">📍 ${esc(it.location)}</div></div>
+        <span style="color:#d1d5db;flex-shrink:0">›</span></div>`).join('')}
+      <button class="dlb" onclick="delPh('${ph.id}')">🗑 Delete photo &amp; ${pi.length} items</button>
+    </div>`);
+}
+
+function mod(h){ document.getElementById('mod').innerHTML=`<div class="mback" onclick="clsMod()"><div class="msh" onclick="event.stopPropagation()"><div class="mhnd"></div>${h}</div></div>`; }
+function clsMod(){ document.getElementById('mod').innerHTML=''; }
+function delIt(id){ if(!confirm('Remove?'))return; items=items.filter(i=>i.id!==id); persist();stats();clsMod();rS();rU(); }
+function delPh(id){
+  if(!confirm(`Delete photo and all its items?`))return;
+  photos=photos.filter(p=>p.id!==id); items=items.filter(i=>i.photoId!==id);
+  persist();stats();clsMod();rG();rU();rS();
+}
+function saveEdit(id){
+  const name=document.getElementById('ei-name').value.trim();
+  const desc=document.getElementById('ei-desc').value.trim();
+  const loc=document.getElementById('ei-loc').value.trim();
+  if(!name){alert('Name cannot be empty');return;}
+  const idx=items.findIndex(i=>i.id===id); if(idx===-1)return;
+  items[idx]={...items[idx],name,description:desc,location:loc};
+  persist();stats();clsMod();rS();rU();
+  setTimeout(()=>opIt(id),200);
+}
+
+// ── Gemini API ────────────────────────────────────────────────────────────────
+async function gemini(prompt){
+  const res=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+  const d=await res.json();
+  if(d.error)throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+async function geminiVision(image_b64,prompt){
+  const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_b64,prompt})});
+  const d=await res.json();
+  if(d.error)throw new Error(JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+// ── Robust JSON parser ────────────────────────────────────────────────────────
+function parseItems(raw){
+  if(!raw)return[];
+  const text=raw.replace(/```json|```/g,'').trim();
+  const m=text.match(/\[[\s\S]*\]/);
+  if(m){ try{ const r=JSON.parse(m[0]); if(Array.isArray(r)&&r.length)return r.filter(x=>x.name); }catch{} }
+  if(text.includes('"name"')){
+    try{
+      let t=text; const s=t.indexOf('['); if(s!==-1)t=t.slice(s); else t='['+t;
+      let br=0,bk=0; for(const c of t){if(c==='{')br++;else if(c==='}')br--;else if(c==='[')bk++;else if(c===']')bk--;}
+      t=t.replace(/,\s*"[^"]*$/,'').replace(/"[^"]*$/,'"?"');
+      while(br>0){t+='}';br--;} while(bk>0){t+=']';bk--;}
+      const r=JSON.parse(t); if(Array.isArray(r)&&r.length)return r.filter(x=>x.name);
+    }catch{}
+    const names=[...text.matchAll(/"name"\s*:\s*"([^"]+)"/g)].map(m=>m[1]);
+    const descs=[...text.matchAll(/"description"\s*:\s*"([^"]+)"/g)].map(m=>m[1]);
+    const locs=[...text.matchAll(/"location"\s*:\s*"([^"]+)"/g)].map(m=>m[1]);
+    const xs=[...text.matchAll(/"x"\s*:\s*(\d+(?:\.\d+)?)/g)].map(m=>+m[1]);
+    const ys=[...text.matchAll(/"y"\s*:\s*(\d+(?:\.\d+)?)/g)].map(m=>+m[1]);
+    const ws=[...text.matchAll(/"w"\s*:\s*(\d+(?:\.\d+)?)/g)].map(m=>+m[1]);
+    const hs=[...text.matchAll(/"h"\s*:\s*(\d+(?:\.\d+)?)/g)].map(m=>+m[1]);
+    if(names.length)return names.map((n,i)=>({name:n,description:descs[i]||'Medicine',location:locs[i]||'shelf',x:xs[i]??null,y:ys[i]??null,w:ws[i]??null,h:hs[i]??null}));
+  }
+  return[];
+}
+
+// ── Compress ──────────────────────────────────────────────────────────────────
+function compress(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width,h=img.height,M=1200;
+      if(w>M||h>M){if(w>h){h=Math.round(h*M/w);w=M;}else{w=Math.round(w*M/h);h=M;}}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=c.toDataURL('image/jpeg',.82);
+      res({b64:dataUrl.split(',')[1],dataUrl});
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function emp(icon,title,text,btn,action){
+  return`<div class="emp"><div class="eic">${icon}</div><div class="eti">${title}</div><div class="etx">${text}</div>${btn?`<button class="ebt" onclick="${action}">${btn}</button>`:''}</div>`;
+}
+</script>
+</body>
+</html>
